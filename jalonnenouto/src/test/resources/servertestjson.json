@@ -1,0 +1,46 @@
+[
+{
+"type": "feature",
+"id": 301,
+"properties": {
+"time": "2018-05-14T14:05:40+00:00",
+"attitude": {
+"bearing": 203,
+"elevation": 0,
+"bank": 0
+},
+"digest": {
+"sha256": "3e494f1222f38a6edfb9919add566bf0d4df03e8f0a98aa7dd5b8c2f13ecfc5f"
+}
+},
+"geometry": {
+"type": "Point",
+"coordinates": [
+7115601.59,
+383687.05
+]
+}
+},
+{
+"type": "feature",
+"id": 302,
+"properties": {
+"time": "2018-05-14T14:05:43+00:00",
+"attitude": {
+"bearing": 196,
+"elevation": 0,
+"bank": 0
+},
+"digest": {
+"sha256": "1630a3aacc75fe2c90ac90cadb21b737a85b053f6a48b9b17a1dd6027a3bb8ff"
+}
+},
+"geometry": {
+"type": "Point",
+"coordinates": [
+7115597.04,
+383685.33
+]
+}
+}
+]

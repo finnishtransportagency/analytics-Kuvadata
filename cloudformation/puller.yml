@@ -1,0 +1,52 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 
+    Template for lambdas to pull data
+    
+
+Resources:
+    LambdaJSONImporter: 
+        Type: AWS::Lambda::Function
+        Properties: 
+            MemorySize: 3008
+            Handler: "com.cgi.liikennevirasto.jalonne.jalonnejsonsplitter.LambdaFunctionHandler"
+            Role: 
+                Fn::ImportValue: !Sub "${JalonenMainStackName}-LambdaPullerExecutionRole"
+            Code: 
+                S3Bucket: !Ref S3BucketforImporter 
+                S3Key: !Ref ImporterLocation 
+            Runtime: "java8"
+            Timeout: "300"
+            TracingConfig:
+                Mode: "Active"
+            VpcConfig:
+                SecurityGroupIds: 
+                    - Fn::ImportValue: !Sub "${JalonenMainStackName}-PullerLambdaSecurityGroup"
+                SubnetIds:
+                 - Fn::ImportValue: !Sub "${JalonenMainStackName}-PrivateSubnet1"
+            Environment:
+                Variables:
+                    s3Bucket: jalonnejobbucket"
+                    datasource: !Ref  datasource
+                    Maintainer: "roudconsulting"
+                    Cregion: !Ref "AWS::Region"
+
+Parameters:
+    JalonenMainStackName:
+        Type: String
+        Description: Jalonen main Stack name
+        Default: jalonne
+
+    S3BucketforImporter:
+        Type: String
+        Description: Which S3 bucket contains Lambda function for importer
+        Default: livijalonnelambda
+
+    ImporterLocation:
+        Type: String
+        Description: Path to importer in S3
+        Default: jalonne-noutaja.zip
+
+    datasource:
+        Type: String
+        Description: source meta url
+        Default: testi
