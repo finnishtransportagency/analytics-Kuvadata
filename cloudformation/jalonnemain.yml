@@ -49,17 +49,16 @@ Metadata:
 ####
 
 Mappings:
-  '981532642896':
-    eu-central-1:
-        InstanceType: db.r4.large
-        BackupRetentionPeriod: 7
-        dbport: 3306
-        imagestore: livijalonneimages
-        dbmultiaz: false
-        defaultdbusername: jallonnen
-        defaultdbPass: 1234W1sdsdsf3 #please do not use this
-        defautTagname: Jalonnen
-
+    '593223377027':
+       eu-central-1:
+           InstanceType: db.r4.large
+           BackupRetentionPeriod: 7
+           dbport: 3306
+           imagestore: livijalonneimagesdev
+           dbmultiaz: false
+           defaultdbusername: jallonnendev
+           defaultdbPass: 1234W1sdsdsf3dev #please do not use this
+           defautTagname: Jalonnen
 
 Parameters:
     DatabaseClusterParameterGroupName:
@@ -165,7 +164,23 @@ Parameters:
     PrivateSubnet5CIDR:
         Description: Please enter the IP range (CIDR notation) for the private Lambda subnet in the Second Availability Zone
         Type: String
-        Default: 10.0.4.0/24         
+        Default: 10.0.3.0/24     
+    
+    JalonneKeyPair: 
+       Description: Amazon EC2 Key Pair
+       Type: "AWS::EC2::KeyPair::KeyName"
+    
+    EnvType: 
+       Description: Environment type
+       Default: test
+       Type: String
+       AllowedValues: 
+         - prod
+         - test
+       ConstraintDescription: Must specify prod or test. In prod database is restored from snapshot 
+
+Conditions: 
+  CreateProdResources: !Equals [ !Ref EnvType, prod ]
 
 Resources:
 
@@ -530,7 +545,7 @@ Resources:
               ToPort: '443'
               CidrIp: 0.0.0.0/0 #lets allow 80 to whole internet so we dont have to specify specific ip
             ###############
-            ######## Aurora
+######## Aurora
     AuroraCluster:
         Type: AWS::RDS::DBCluster
         DeletionPolicy: Snapshot 
@@ -540,7 +555,7 @@ Resources:
             #MasterUsername:  #disable from snapshot
             #    Ref: DatabaseUsername
             #MasterUserPassword: 
-             #   Ref: DatabasePassword
+            #    Ref: DatabasePassword
             BackupRetentionPeriod: !FindInMap [!Ref "AWS::AccountId", !Ref "AWS::Region", "BackupRetentionPeriod"]
             DBClusterParameterGroupName: default.aurora-postgresql9.6
             Port: !FindInMap [!Ref "AWS::AccountId", !Ref "AWS::Region", "dbport"]
@@ -632,7 +647,7 @@ Resources:
         Properties: 
           InstanceType: t2.micro  
           ImageId: "ami-0233214e13e500f77"
-          KeyName: "jalonne"
+          KeyName: !Ref JalonneKeyPair
           SubnetId: !Ref PublicSubnet1
           SecurityGroupIds:
              -  !GetAtt EC2ConfSecurityGroup.GroupId

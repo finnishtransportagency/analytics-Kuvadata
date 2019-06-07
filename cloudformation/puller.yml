@@ -25,7 +25,6 @@ Resources:
                  - Fn::ImportValue: !Sub "${JalonenMainStackName}-PrivateSubnet1"
             Environment:
                 Variables:
-                    s3Bucket: jalonnejobbucket"
                     datasource: !Ref  datasource
                     Maintainer: "roudconsulting"
                     Cregion: !Ref "AWS::Region"
@@ -34,19 +33,29 @@ Parameters:
     JalonenMainStackName:
         Type: String
         Description: Jalonen main Stack name
-        Default: jalonne
+        Default: "jalonne"
 
     S3BucketforImporter:
         Type: String
         Description: Which S3 bucket contains Lambda function for importer
-        Default: livijalonnelambda
+        Default: "livijalonnelambda"
 
     ImporterLocation:
         Type: String
         Description: Path to importer in S3
-        Default: jalonne-noutaja.zip
+        Default: "jalonne-noutaja.zip"
 
     datasource:
         Type: String
         Description: source meta url
-        Default: testi
+        Default: "testi"
+
+    s3BucketJobs:
+       Type: String
+       Description: S3 bucket for jalonnejobs
+       Default: "jalonnejobbucket"
+       
+    s3BucketImages:
+       Type: String
+       Description: S3 bucket for jalonnejobs
+       Default: "jalonnekuvat"

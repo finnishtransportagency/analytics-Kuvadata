@@ -42,7 +42,7 @@ public class LambdaFunctionHandlerTest {
     	environmentVariables.set("Maintainer", "Test");
     	environmentVariables.set("Cregion", "eu-central-1"); //s3Bucket
     //	environmentVariables.set("s3Bucket", "testbucket");
-    	environmentVariables.set("s3Bucket", "jalonnejobbucket");
+    	environmentVariables.set("s3Bucket", "jalonnejobbucketdev");
     	
     	LambdaFunctionHandler handler = new LambdaFunctionHandler();
         Context ctx = createContext();
