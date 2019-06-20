@@ -8,7 +8,7 @@ Resources:
         Type: AWS::Lambda::Function
         Properties: 
             MemorySize: 3008
-            Handler: "com.cgi.liikennevirasto.jalonne.jalonnejsonsplitter.LambdaFunctionHandler"
+            Handler: "com.cgi.liikennevirasto.jalonne.nouto.LambdaFunctionHandler"
             Role: 
                 Fn::ImportValue: !Sub "${JalonenMainStackName}-LambdaPullerExecutionRole"
             Code: 
@@ -20,11 +20,15 @@ Resources:
                 Mode: "Active"
             VpcConfig:
                 SecurityGroupIds: 
-                    - Fn::ImportValue: !Sub "${JalonenMainStackName}-PullerLambdaSecurityGroup"
+                    - Fn::ImportValue: !Sub "${JalonenMainStackName}-PullerLambdaSecurityGroup"                    #- Fn::ImportValue: !Sub "${JalonenMainStackName}-DBWriterLambdaSecurityGroup" #lisataan manuaalisesti kunnes main-stack luotu uudelleen
                 SubnetIds:
                  - Fn::ImportValue: !Sub "${JalonenMainStackName}-PrivateSubnet1"
+                 - Fn::ImportValue: !Sub "${JalonenMainStackName}-PrivateSubnet2"
             Environment:
                 Variables:
+                    dbUrl: !Ref dbUrl
+                    dbUser: !Ref dbUser
+                    dbPassword: !Ref dbPassword
                     datasource: !Ref  datasource
                     Maintainer: "roudconsulting"
                     Cregion: !Ref "AWS::Region"
@@ -33,27 +37,42 @@ Parameters:
     JalonenMainStackName:
         Type: String
         Description: Jalonen main Stack name
-        Default: "jalonne"
+        Default: "JalonneMain"
 
     S3BucketforImporter:
         Type: String
         Description: Which S3 bucket contains Lambda function for importer
-        Default: "livijalonnelambda"
+        Default: "livijalonnelambdadev"
 
     ImporterLocation:
         Type: String
-        Description: Path to importer in S3
-        Default: "jalonne-noutaja.zip"
+        Description: Path to json fetcher and splitter in S3
+        Default: "jalonnejsonsplitter-0.0.0.jar"
 
     datasource:
         Type: String
         Description: source meta url
         Default: "testi"
+        
+    dbUrl:
+        Type: String
+        Description: jalonne kuvadata db
+        Default: "jdbc:postgresql://ja26l0cdmtgvsr.ceetf0cw6ryo.eu-central-1.rds.amazonaws.com:3306/kuvatieto"
+   
+    dbUser:
+        Type: String
+        Description: jalonne db user
+        Default: "user"
+      
+    dbPassword:
+        Type: String
+        Description: jalonne db password
+        Default: "password"
 
     s3BucketJobs:
        Type: String
        Description: S3 bucket for jalonnejobs
-       Default: "jalonnejobbucket"
+       Default: "jalonnejobbucketdev"
        
     s3BucketImages:
        Type: String

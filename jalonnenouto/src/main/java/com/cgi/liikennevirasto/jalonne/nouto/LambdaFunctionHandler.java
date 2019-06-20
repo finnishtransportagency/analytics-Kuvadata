@@ -1,8 +1,7 @@
-package com.amazonaws.lambda.nouto;
+package com.cgi.liikennevirasto.jalonne.nouto;
 
 import java.net.URI;
 
-import com.amazonaws.lambda.nouto.JSONtoObject.PictureMetadata;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
@@ -13,6 +12,7 @@ import com.amazonaws.services.s3.AmazonS3URI;
 import com.amazonaws.services.s3.model.CopyObjectResult;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.cgi.liikennevirasto.jalonne.nouto.JSONtoObject.PictureMetadata;
 
 public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
 	final String dstBucketImages = System.getenv("s3BucketImages");

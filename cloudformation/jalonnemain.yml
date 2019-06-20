@@ -87,13 +87,13 @@ Parameters:
     
     S3BucketforImporter:
         Type: String
-        Description: Which S3 bucket contains Lambda function for importer
+        Description: Which S3 bucket contains Lambda function for importer (to DB)
         Default: livijalonnelambda
 
     ImporterLocation:
         Type: String
         Description: Path to importer in S3
-        Default: jalonne.zip 
+        Default: nouto-0.0.1.jar 
     
     DatabaseUsername:
         AllowedPattern: "[a-zA-Z0-9]+"
@@ -550,12 +550,13 @@ Resources:
         Type: AWS::RDS::DBCluster
         DeletionPolicy: Snapshot 
         Properties:
-            SnapshotIdentifier: !Ref "Snapshotidentifier" #remove if not needed
+            SnapshotIdentifier: #disabled from test
+               !If [createProdResources, !Ref Snapshotidentifier, !Ref "AWS::NoValue"]
             Engine: aurora-postgresql
-            #MasterUsername:  #disable from snapshot
-            #    Ref: DatabaseUsername
-            #MasterUserPassword: 
-            #    Ref: DatabasePassword
+            MasterUsername:  #disabled from prod where snapshot is used
+               !If [createProdResources, !Ref "AWS::NoValue", !Ref: DatabaseUsername]
+            MasterUserPassword: #disabled from prod where snapshot is used
+               !If [createProdResources, !Ref "AWS::NoValue", !Ref: DatabasePassword]
             BackupRetentionPeriod: !FindInMap [!Ref "AWS::AccountId", !Ref "AWS::Region", "BackupRetentionPeriod"]
             DBClusterParameterGroupName: default.aurora-postgresql9.6
             Port: !FindInMap [!Ref "AWS::AccountId", !Ref "AWS::Region", "dbport"]
@@ -565,6 +566,7 @@ Resources:
                 Ref:  DBSubnetGroup
             VpcSecurityGroupIds:
                 - !Ref DBSecurityGroup
+
     AuroraPrimaryInstance:
         Type: AWS::RDS::DBInstance
         Properties:
@@ -609,8 +611,8 @@ Resources:
                     dbport: !FindInMap [!Ref "AWS::AccountId", !Ref "AWS::Region", "dbport"]
                     dbWriteURL: !GetAtt AuroraCluster.Endpoint.Address
                     imagesS3Bucket: !Ref S3ImageBucketName
-
-                    
+                    dbUser: !Ref dbUser
+                    dbPassword: !Ref dbPassword                    
 
 ###Lambda invoker                    
     LambdaInvokePermission:
@@ -738,6 +740,7 @@ Resources:
                   - ec2:DeleteNetworkInterface
                   - xray:*
                   - s3:*
+                  - rds:* #restrict these
                   Resource: "*"
     
     LambdaQuerynRole:
@@ -837,5 +840,10 @@ Outputs:
         Description: Security Group ID for Puller Lambda
         Value: !GetAtt PullerLambdaSecurityGroup.GroupId
         "Export" : { "Name" : {"Fn::Sub": "${AWS::StackName}-PullerLambdaSecurityGroup" }}
+    
+    DBWriterLambdaSecurityGroup:
+        Description: Security Group ID for db writing Lambda
+        Value: !GetAtt DBWriterLambdaSecurityGroup.GroupId
+        "Export" : { "Name" : {"Fn::Sub": "${AWS::StackName}-DBWriterLambdaSecurityGroup" }}
 
 

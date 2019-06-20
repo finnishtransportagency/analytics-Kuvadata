@@ -1,4 +1,4 @@
-package com.amazonaws.lambda.nouto;
+package com.cgi.liikennevirasto.jalonne.nouto;
 
 import java.io.BufferedReader;
 import java.io.IOException;
