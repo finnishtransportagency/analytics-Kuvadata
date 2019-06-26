@@ -26,12 +26,10 @@ Resources:
                  - Fn::ImportValue: !Sub "${JalonenMainStackName}-PrivateSubnet2"
             Environment:
                 Variables:
-                    dbUrl: !Ref dbUrl
-                    dbUser: !Ref dbUser
-                    dbPassword: !Ref dbPassword
                     datasource: !Ref  datasource
                     Maintainer: "roudconsulting"
                     Cregion: !Ref "AWS::Region"
+                    s3Bucket: !Ref s3BucketJobs
 
 Parameters:
     JalonenMainStackName:
@@ -47,34 +45,14 @@ Parameters:
     ImporterLocation:
         Type: String
         Description: Path to json fetcher and splitter in S3
-        Default: "jalonnejsonsplitter-0.0.0.jar"
+        Default: "jalonnejsonhandler-0.0.1.jar"
 
     datasource:
         Type: String
         Description: source meta url
         Default: "testi"
-        
-    dbUrl:
-        Type: String
-        Description: jalonne kuvadata db
-        Default: "jdbc:postgresql://ja26l0cdmtgvsr.ceetf0cw6ryo.eu-central-1.rds.amazonaws.com:3306/kuvatieto"
-   
-    dbUser:
-        Type: String
-        Description: jalonne db user
-        Default: "user"
-      
-    dbPassword:
-        Type: String
-        Description: jalonne db password
-        Default: "password"
 
     s3BucketJobs:
        Type: String
        Description: S3 bucket for jalonnejobs
        Default: "jalonnejobbucketdev"
-       
-    s3BucketImages:
-       Type: String
-       Description: S3 bucket for jalonnejobs
-       Default: "jalonnekuvat"
