@@ -1,6 +1,16 @@
 package com.cgi.liikennevirasto.jalonne.nouto;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.imageio.ImageIO;
+
+import org.apache.commons.io.FilenameUtils;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
@@ -9,14 +19,19 @@ import com.amazonaws.services.lambda.runtime.events.S3Event;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3URI;
-import com.amazonaws.services.s3.model.CopyObjectResult;
 import com.amazonaws.services.s3.model.GetObjectRequest;
+import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.amazonaws.services.s3.model.PutObjectResult;
 import com.amazonaws.services.s3.model.S3Object;
 import com.cgi.liikennevirasto.jalonne.nouto.JSONtoObject.PictureMetadata;
 
 public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
-	final String dstBucketImages = System.getenv("s3BucketImages");
-	final String dstBucketJobs = System.getenv("s3BucketJobs");
+	private final String JPG_TYPE = (String) "jpg";
+    private final String JPG_MIME = (String) "image/jpeg";
+    private final String PNG_TYPE = (String) "png";
+    private final String PNG_MIME = (String) "image/png";
+	final String dstBucketImages = System.getenv("imagesS3Bucket");
+
 	//Lambda jaadyttaa ja mahdollisesti kierrattaa handlerin ulkopuolisia muuttujia (ja yhteyksia)
 	//Yhtaikaisten yhteyksien riittavyys varmistetaan taman lambdan max 100 yhtaikaisella suorituksella
 	Tietokantayhteys tietokantayhteys = new Tietokantayhteys();
@@ -44,31 +59,56 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
 		
 		boolean updateok = false;
 		try {
+			logger.log("## Hae s3 objekti: " + bucket + ", " + key);
 			//Hae tapahtuman laukaissut tiedosto ja muunna se jsoniksi
 			S3Object response = s3.getObject(new GetObjectRequest(bucket, key));
 			String contentType = response.getObjectMetadata().getContentType();
 			context.getLogger().log("## CONTENT TYPE: " + contentType);
 			String json = s3reader.urlReader(response.getObjectContent(), context);
 			
-			//Muuna json, hae metatietojen urlia vastaava tiedosto
+			//Muuna json, hae metatietojen urlia vastaava kuvatiedosto
 			PictureMetadata pictureMetadata = j20.json2Object(json);
 			URI srcPictureURL = new URI(pictureMetadata.url);
-			context.getLogger().log("## kuvan url: " + srcPictureURL);
-			AmazonS3URI amazonS3URI = new AmazonS3URI(srcPictureURL);
-			String srcBucket = amazonS3URI.getBucket();
-			String srcKey = amazonS3URI.getKey();
-			context.getLogger().log("## s3 lahde: " + srcBucket + ", " + srcKey);
-			//sama kuin lahde
-			String dstKey = amazonS3URI.getKey();
+			logger.log("## kuvan url: " + srcPictureURL);
+			String filename = FilenameUtils.getName(srcPictureURL.getPath());
 			
-			//Kopioi kuva s3 bucketien kesken
-			CopyObjectResult copyObjectResult = s3.copyObject(srcBucket, srcKey, dstBucketImages, dstKey);
+			// Tarkista kuvan tyyppi
+	        Matcher matcher = Pattern.compile(".*\\.([^\\.]*)").matcher(filename);
+	        if (!matcher.matches()) {
+	            logger.log("## Kuvan tyyppia ei loydetty tiedostonimesta "
+	                    + filename);
+	            return "";
+	        }
+	        String imageType = matcher.group(1);
+	        if (!(JPG_TYPE.equals(imageType)) && !(PNG_TYPE.equals(imageType))) {
+	            logger.log("## Kuvatyyppi ei ole tuetttu " + filename);
+	            return "";
+	        }
+			
+			
+			// siirrettavat kuvat eivat olekaan s3:ssa, vaan missa vaan palvelimella
+			BufferedImage img = ImageIO.read(srcPictureURL.toURL());
+			ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ImageIO.write(img, imageType, os);
+            InputStream is = new ByteArrayInputStream(os.toByteArray());
+            // Set Content-Length and Content-Type
+            ObjectMetadata meta = new ObjectMetadata();
+            meta.setContentLength(os.size());
+            if (JPG_TYPE.equals(imageType)) {
+                meta.setContentType(JPG_MIME);
+            }
+            if (PNG_TYPE.equals(imageType)) {
+                meta.setContentType(PNG_MIME);
+            }
+            // tallennettaan kuva
+            logger.log("## tallennetaan kuva s3 buckettiin: " + dstBucketImages + ", " + filename);
+			PutObjectResult putObjectResult = s3.putObject(dstBucketImages, filename, is, meta);
 
-			//TODO: tallenna metatieto tietokantaan, jos kuvan kopiointi onnistunut
-			String dstPictureURL = "s3://" + dstBucketImages + dstKey;
-			AmazonS3URI amazonS3URI2 = new AmazonS3URI(dstPictureURL);
+			// tallenna metatieto tietokantaan, jos kuvan kopiointi onnistunut
+			String dstPictureURL = "s3://" + dstBucketImages + filename;
+			AmazonS3URI amazonS3URI = new AmazonS3URI(dstPictureURL);
 			
-			int rows = tietokantayhteys.updateKuvadata(context, pictureMetadata, amazonS3URI2);
+			int rows = tietokantayhteys.updateKuvadata(context, pictureMetadata, amazonS3URI);
 			if(rows > 0) updateok = true;
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -93,7 +93,7 @@ Parameters:
     ImporterLocation:
         Type: String
         Description: Path to importer in S3
-        Default: nouto-0.0.1.jar 
+        Default: jalonnedataimporter-0.0.1.jar 
     
     DatabaseUsername:
         AllowedPattern: "[a-zA-Z0-9]+"
@@ -165,6 +165,15 @@ Parameters:
         Description: Please enter the IP range (CIDR notation) for the private Lambda subnet in the Second Availability Zone
         Type: String
         Default: 10.0.3.0/24     
+        
+    LambdaDBUser:
+       Description: db user for the importer lambda
+       Type: String
+       
+    LambdaDBPassword:
+       Description: db password for the importer lambda
+       Type: String
+       NoEcho: 'true'
     
     JalonneKeyPair: 
        Description: Amazon EC2 Key Pair
@@ -525,6 +534,10 @@ Resources:
               FromPort: '80'
               ToPort: '80'
               CidrIp: 0.0.0.0/0 #lets allow 80 to whole internet so we dont have to specify specific ip
+            - IpProtocol: tcp 
+              FromPort: '443'
+              ToPort: '443'
+              CidrIp: 0.0.0.0/0 #needs port 443 for s3 access
             - IpProtocol: tcp
               FromPort: !FindInMap [!Ref "AWS::AccountId", !Ref "AWS::Region", "dbport"]
               ToPort: !FindInMap [!Ref "AWS::AccountId", !Ref "AWS::Region", "dbport"]
@@ -550,13 +563,13 @@ Resources:
         Type: AWS::RDS::DBCluster
         DeletionPolicy: Snapshot 
         Properties:
-            SnapshotIdentifier: #disabled from test
-               !If [createProdResources, !Ref Snapshotidentifier, !Ref "AWS::NoValue"]
+            SnapshotIdentifier: #disabled from prod
+               !If [CreateProdResources, !Ref "AWS::NoValue", !Ref Snapshotidentifier]
             Engine: aurora-postgresql
-            MasterUsername:  #disabled from prod where snapshot is used
-               !If [createProdResources, !Ref "AWS::NoValue", !Ref: DatabaseUsername]
-            MasterUserPassword: #disabled from prod where snapshot is used
-               !If [createProdResources, !Ref "AWS::NoValue", !Ref: DatabasePassword]
+            MasterUsername:  #enabled for prod
+               !If [CreateProdResources, !Ref DatabaseUsername, !Ref "AWS::NoValue"]
+            MasterUserPassword: #enabled for prod
+               !If [CreateProdResources, !Ref DatabasePassword, !Ref "AWS::NoValue"]
             BackupRetentionPeriod: !FindInMap [!Ref "AWS::AccountId", !Ref "AWS::Region", "BackupRetentionPeriod"]
             DBClusterParameterGroupName: default.aurora-postgresql9.6
             Port: !FindInMap [!Ref "AWS::AccountId", !Ref "AWS::Region", "dbport"]
@@ -611,8 +624,8 @@ Resources:
                     dbport: !FindInMap [!Ref "AWS::AccountId", !Ref "AWS::Region", "dbport"]
                     dbWriteURL: !GetAtt AuroraCluster.Endpoint.Address
                     imagesS3Bucket: !Ref S3ImageBucketName
-                    dbUser: !Ref dbUser
-                    dbPassword: !Ref dbPassword                    
+                    dbUser: !Ref LambdaDBUser 
+                    dbPassword: !Ref LambdaDBPassword                     
 
 ###Lambda invoker                    
     LambdaInvokePermission:

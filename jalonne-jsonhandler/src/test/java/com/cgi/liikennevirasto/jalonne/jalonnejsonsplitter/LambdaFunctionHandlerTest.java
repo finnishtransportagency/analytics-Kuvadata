@@ -38,7 +38,7 @@ public class LambdaFunctionHandlerTest {
     
     @Test
     public void testLambdaFunctionHandler() {
-    	environmentVariables.set("datasource", "https://s3.eu-central-1.amazonaws.com/jalonne-server-mock/images");
+    	environmentVariables.set("datasourceurl", "https://s3.eu-central-1.amazonaws.com/jalonne-server-mock/images");
     	environmentVariables.set("Maintainer", "Test");
     	environmentVariables.set("Cregion", "eu-central-1"); //s3Bucket
     //	environmentVariables.set("s3Bucket", "testbucket");

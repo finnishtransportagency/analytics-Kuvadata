@@ -19,7 +19,7 @@ import com.google.gson.Gson;
  *
  */
 public class LambdaFunctionHandler implements RequestHandler<Object, String> {
-	String urlToFetch=System.getenv("datasource");
+	String urlToFetch=System.getenv("datasourceurl");
 	private Boolean failedThread=false;
 	@Override
 	public String handleRequest(Object input, Context context) {

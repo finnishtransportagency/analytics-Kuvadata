@@ -26,7 +26,7 @@ Resources:
                  - Fn::ImportValue: !Sub "${JalonenMainStackName}-PrivateSubnet2"
             Environment:
                 Variables:
-                    datasource: !Ref  datasource
+                    datasourceurl: !Ref  datasource
                     Maintainer: "roudconsulting"
                     Cregion: !Ref "AWS::Region"
                     s3Bucket: !Ref s3BucketJobs
@@ -47,7 +47,7 @@ Parameters:
         Description: Path to json fetcher and splitter in S3
         Default: "jalonnejsonhandler-0.0.1.jar"
 
-    datasource:
+    datasourceurl:
         Type: String
         Description: source meta url
         Default: "testi"
