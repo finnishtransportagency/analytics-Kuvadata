@@ -31,6 +31,7 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
     private final String PNG_TYPE = (String) "png";
     private final String PNG_MIME = (String) "image/png";
 	final String dstBucketImages = System.getenv("imagesS3Bucket");
+	final String dstFolderImages = System.getenv("imagesFolder");
 
 	//Lambda jaadyttaa ja mahdollisesti kierrattaa handlerin ulkopuolisia muuttujia (ja yhteyksia)
 	//Yhtaikaisten yhteyksien riittavyys varmistetaan taman lambdan max 100 yhtaikaisella suorituksella
@@ -101,11 +102,12 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
                 meta.setContentType(PNG_MIME);
             }
             // tallennettaan kuva
-            logger.log("## tallennetaan kuva s3 buckettiin: " + dstBucketImages + ", " + filename);
-			PutObjectResult putObjectResult = s3.putObject(dstBucketImages, filename, is, meta);
+            logger.log("## tallennetaan kuva s3 buckettiin: " + dstBucketImages + ", " + dstFolderImages + ", " + filename);
+			PutObjectResult putObjectResult = s3.putObject(dstBucketImages, dstFolderImages + filename, is, meta);
 
 			// tallenna metatieto tietokantaan, jos kuvan kopiointi onnistunut
-			String dstPictureURL = "s3://" + dstBucketImages + filename;
+			String dstPictureURL = "https://s3-eu-central-1.amazonaws.com/" + dstBucketImages + "/" + dstFolderImages + "/" + filename;
+			logger.log("## s3 url: " + dstPictureURL);
 			AmazonS3URI amazonS3URI = new AmazonS3URI(dstPictureURL);
 			
 			int rows = tietokantayhteys.updateKuvadata(context, pictureMetadata, amazonS3URI);

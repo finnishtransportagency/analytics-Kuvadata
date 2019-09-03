@@ -99,5 +99,11 @@
 	    <artifactId>commons-io</artifactId>
 	    <version>2.6</version>
 	</dependency>
+     <!-- Proj4J is a Java library to transform point coordinates from one geographic coordinate system to another-->
+    <dependency>
+        <groupId>org.osgeo</groupId>
+        <artifactId>proj4j</artifactId>
+        <version>0.1.0</version>
+    </dependency>
   </dependencies>
 </project>
