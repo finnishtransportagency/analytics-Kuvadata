@@ -26,6 +26,7 @@ public class Tietokantayhteys {
 	String dbPort = System.getenv("dbport");
     String username = System.getenv("dbUser");
     String password = System.getenv("dbPassword");
+    String dstFolderImages = System.getenv("imagesFolder");
     Connection conn = null;
     static final String insertSql = 
     		"INSERT INTO kuvatieto.pic_metadata (pic_orig_file, pic_aws_file, pic_date,"
@@ -133,7 +134,8 @@ public class Tietokantayhteys {
 	}
 	
 	static String getAWSFilename(AmazonS3URI uri) {
-		String filename = FilenameUtils.getName(uri.getURI().getPath());
+		String filename = uri.getKey();
+		System.out.println("AWS filename from s3uri: " + filename);
 		return extranetOsoite + filename;
 	}
 	

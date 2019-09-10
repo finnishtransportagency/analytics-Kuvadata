@@ -106,7 +106,7 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
 			PutObjectResult putObjectResult = s3.putObject(dstBucketImages, dstFolderImages + awsFilename, is, meta);
 
 			// tallenna metatieto tietokantaan, jos kuvan kopiointi onnistunut
-			String dstPictureURL = "https://s3-eu-central-1.amazonaws.com/" + dstBucketImages + "/" + dstFolderImages + "/" + awsFilename;
+			String dstPictureURL = "https://s3-eu-central-1.amazonaws.com/" + dstBucketImages + "/" + dstFolderImages + awsFilename;
 			logger.log("## s3 url: " + dstPictureURL);
 			AmazonS3URI amazonS3URI = new AmazonS3URI(dstPictureURL);
 			

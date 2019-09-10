@@ -8,6 +8,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3Client;
 import com.cgi.liikennevirasto.jalonne.jalonnejsonsplitter.JSONtoObject.PictureMetadata;
 import com.google.gson.Gson;
 
@@ -23,6 +25,8 @@ public class LambdaFunctionHandler implements RequestHandler<Object, String> {
 	private Boolean failedThread=false;
 	@Override
 	public String handleRequest(Object input, Context context) {
+		String region=System.getenv("Cregion");
+		AmazonS3 s3Client = AmazonS3Client.builder().withRegion(region).build();
 		context.getLogger().log("Url to read: " + urlToFetch);
 		Gson gson = new Gson();
 		readJsonFromURL urlReader= new readJsonFromURL();
@@ -39,8 +43,8 @@ public class LambdaFunctionHandler implements RequestHandler<Object, String> {
 				String generatedString = UUID.randomUUID().toString().replace("-", "");
 				// save location format: date/maintainer/<random_string>id<id>
 				String savelocation= new SimpleDateFormat("dd.MM.yyyy").format(new Date()) +"/" + System.getenv("Maintainer").toLowerCase()+ "/"+ generatedString+"id"+picMetadata.id+".json";
-				String region=System.getenv("Cregion");
-				Runnable s3writer= new S3Writer(gson.toJson(picMetadata), region, System.getenv("s3Bucket"),savelocation,context,failedThread);
+				
+				Runnable s3writer= new S3Writer(gson.toJson(picMetadata), s3Client, System.getenv("s3Bucket"),savelocation,context,failedThread);
 				pool.execute(s3writer);
 			}
 			pool.shutdown();			
@@ -60,6 +64,7 @@ public class LambdaFunctionHandler implements RequestHandler<Object, String> {
 			System.err.println(errorMessage);
 			e.printStackTrace();
 		}
+		s3Client.shutdown();
 		if (failedThread)
 		System.exit(-1);
 		return "Success";
