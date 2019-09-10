@@ -23,13 +23,15 @@ public class LambdaFunctionHandler implements RequestHandler<Object, String> {
 	private Boolean failedThread=false;
 	@Override
 	public String handleRequest(Object input, Context context) {
-		//context.getLogger().log("Input: " + input);
+		context.getLogger().log("Url to read: " + urlToFetch);
 		Gson gson = new Gson();
 		readJsonFromURL urlReader= new readJsonFromURL();
 		try {
 			String jsonString = urlReader.urlReader(urlToFetch,context);
+			context.getLogger().log("Alkuperainen JSON luettu pituus" + jsonString.length());
 			JSONtoObject listOfMeta= new JSONtoObject();
 			PictureMetadata[] metadata=listOfMeta.json2Object(jsonString);
+			context.getLogger().log("## Size of picture meta array: " + metadata.length);
 			ExecutorService pool = Executors.newFixedThreadPool(512); // limit for maximum write threads
 			for (PictureMetadata picMetadata: metadata) {
 				picMetadata.maintainer=System.getenv("Maintainer");

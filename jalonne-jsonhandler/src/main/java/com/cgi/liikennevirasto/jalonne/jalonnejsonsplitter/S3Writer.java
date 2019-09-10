@@ -15,7 +15,6 @@ public class S3Writer implements Runnable{
 	private String bucketName;
 	private String savePathAndFileName;
 	private Context context;
-	private SavedObject sObject;
 	@SuppressWarnings("unused")
 	private Boolean failed; //tells main thread if one of the writer has failed, and alert us if we should check logs
 
@@ -41,14 +40,13 @@ public class S3Writer implements Runnable{
 			//if (!System.getenv("Maintainer").equals("Test")) //in test mode we dont want to test writing 
 				s3Client.putObject(bucketName,savePathAndFileName, byteString,oMetadata);
 			System.out.println("Json splitted successfully");
-			SavedObject savedjson= new SavedObject(json,savePathAndFileName,bucketName,oMetadata);
-			sObject=savedjson;
 		} catch (UnsupportedEncodingException e) {
 			String errorMessage="Failure to generate random string for picture id: " + savePathAndFileName;
 			context.getLogger().log(errorMessage);
 			failed=true;
 			System.err.println(errorMessage);
 			e.printStackTrace();
+			s3Client.shutdown();
 		}
 		catch (Exception e) {
 			failed=true;
@@ -56,13 +54,9 @@ public class S3Writer implements Runnable{
 			context.getLogger().log(errorMessage);
 			System.err.println(errorMessage);
 			e.printStackTrace();
+			s3Client.shutdown();
 		}
+		s3Client.shutdown();
 	}
-	public SavedObject getSavedObject() {
-		return this.sObject;
-	}
-
-
-
 
 }

@@ -16,14 +16,14 @@ public class JSONtoObject {
 	}
 	
 	class Attitude {
-		int bearing;
-		int elevation;
-		int bank;
+		double bearing;
+		double elevation;
+		double bank;
 
 	}
 	class PictureMetadata{
 		String type;
-		int id;
+		String id;
 		Geometry geometry;
 		String maintainer;
 		Properties properties;

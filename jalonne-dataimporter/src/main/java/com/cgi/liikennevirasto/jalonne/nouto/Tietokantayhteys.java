@@ -1,5 +1,6 @@
 package com.cgi.liikennevirasto.jalonne.nouto;
 
+import java.net.URI;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -27,9 +28,9 @@ public class Tietokantayhteys {
     String password = System.getenv("dbPassword");
     Connection conn = null;
     static final String insertSql = 
-    		"INSERT INTO kuvatieto.pic_metadata (pic_orig_id, pic_orig_file, pic_aws_file, pic_date,"
+    		"INSERT INTO kuvatieto.pic_metadata (pic_orig_file, pic_aws_file, pic_date,"
     		+ " pic_longitude, pic_latitude, pic_bearing, pic_bank, pic_aws_load_timestamp, pic_geometry,"
-    		+ " pic_time, pic_anonymized) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    		+ " pic_time, pic_anonymized) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     static final String extranetOsoite = "https://extranet.liikennevirasto.fi/kuvadata/kuvat/";
     
     //Lambda containerille mahdollisuus kierrattaa luokkaa ja yhteytta
@@ -63,35 +64,36 @@ public class Tietokantayhteys {
 	        PreparedStatement stmt = conn.prepareStatement(insertSql);
 	        
 	        //muutetaan jsonin tiedot wgs84 koordinaatistoon
-			Point etrs89tm35Point = getPoint(picture); 
-			Point wgs84Point = Koordinaattimuuntaja.convertFromETRS89ToWGS84(etrs89tm35Point);
+			Point origPoint = getPoint(picture); 
+			//Ei tarvita, tulevatkin nykyaan valmiina
+			//Point wgs84Point = Koordinaattimuuntaja.convertFromETRS89ToWGS84(origPoint);
 			
-			PGgeometry pGgeometry = new PGgeometry(wgs84Point);
+			PGgeometry pGgeometry = new PGgeometry(origPoint);
 			Time kuvanaika = getSqlTime(picture.properties.time);
 			java.sql.Date kuvanpvm = getSqlDate(picture.properties.time);
 			
-			String tiedostonimi = getFilename(uri);
+			String tiedostonimi = getFilename(picture.url);
+			String awsnimi = getAWSFilename(uri);
 			
-	        stmt.setInt(1, picture.id); 		//pic_orig_id
-	        stmt.setString(2, tiedostonimi); 	//pic_orig_file
-	        //TODO: aws -osoite vain kansion tasolta asti, alku on vakiomuotoinen ext-osoite
-	        stmt.setString(3, uri.toString()); 	//pic_aws_file
-	        stmt.setDate(4, kuvanpvm);			//pic_date
-	        stmt.setDouble(5, wgs84Point.x);	//pic_longitude
-	        stmt.setDouble(6, wgs84Point.y);	//pic_latitude
-	        stmt.setInt(7, picture.properties.attitude.bearing); //pic_bearing
-	        stmt.setInt(8, picture.properties.attitude.bank);	 //pic_bank
-	        stmt.setTimestamp(9, new Timestamp(now.getTime()));	 //pic_aws_load_timestamp
-	        stmt.setObject(10, pGgeometry);		//pic_geometry
-	        stmt.setTime(11, kuvanaika);		//pic_time
-	        stmt.setBoolean(12, false);			//pic_anonymized
+	        //stmt.setInt(1, picture.id); 		//pic_orig_id -EI TALLENNETA, TIETOTYYPPI MUUTTUNUT -9.9.2019
+	        stmt.setString(1, tiedostonimi); 	//pic_orig_file
+	        stmt.setString(2, awsnimi); 	//pic_aws_file
+	        stmt.setDate(3, kuvanpvm);			//pic_date
+	        stmt.setDouble(4, origPoint.x);	//pic_longitude
+	        stmt.setDouble(5, origPoint.y);	//pic_latitude
+	        stmt.setDouble(6, picture.properties.attitude.bearing); //pic_bearing
+	        stmt.setDouble(7, picture.properties.attitude.bank);	 //pic_bank
+	        stmt.setTimestamp(8, new Timestamp(now.getTime()));	 //pic_aws_load_timestamp
+	        stmt.setObject(9, pGgeometry);		//pic_geometry
+	        stmt.setTime(10, kuvanaika);		//pic_time
+	        stmt.setBoolean(11, false);			//pic_anonymized
 	        
 	        result = stmt.executeUpdate();
 
 	        logger.log("## SQL: " + insertSql);
 	        logger.log("## SQL parametrit: " + picture.id + ",orig_file" 
-	        + ",aws_file" + ","+ kuvanpvm + ","+wgs84Point.x + ","+wgs84Point.y + ","+picture.properties.attitude.bearing 
-	        + ","+picture.properties.attitude.bank + ","+now.getTime() + ","+wgs84Point.toString() + ","+kuvanaika + ",false");
+	        + ",aws_file" + ","+ kuvanpvm + ","+origPoint.x + ","+origPoint.y + ","+picture.properties.attitude.bearing 
+	        + ","+picture.properties.attitude.bank + ","+now.getTime() + ","+origPoint.toString() + ","+kuvanaika + ",false");
 	        logger.log("## Tiedot viety tietokantaan: " + result);
 
 	      } catch (SQLTimeoutException e) {
@@ -118,9 +120,21 @@ public class Tietokantayhteys {
 		return point;
 	}
 	
-	static String getFilename(AmazonS3URI uri) {
-		String filename = FilenameUtils.getName(uri.getURI().getPath());
+	static String getFilename(String url) {
+		String filename = "";
+		try {
+			URI uri = new URI(url);
+			filename = FilenameUtils.getName(uri.getPath());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		return filename;
+	}
+	
+	static String getAWSFilename(AmazonS3URI uri) {
+		String filename = FilenameUtils.getName(uri.getURI().getPath());
+		return extranetOsoite + filename;
 	}
 	
 	static java.sql.Date getSqlDate(String sqldate) {
@@ -150,17 +164,6 @@ public class Tietokantayhteys {
 		}
 		
 		return aika;
-	}
-	
-	public static void main(String[] args) {
-		Double lon = 383687.05;
-		Double lat = 7115601.59;
-		
-		Point point = new Point(lon,lat);
-		Point wgs84Point = Koordinaattimuuntaja.convertFromETRS89ToWGS84(point);
-		
-		System.out.println("Vanha piste lat, long: " + point.getY() + ","+point.getX());
-		System.out.println("Uusi piste: " + wgs84Point.getY() + "," + wgs84Point.getX());
 	}
 
 }

@@ -620,6 +620,7 @@
                    S3Bucket: !Ref S3BucketforImporter 
                    S3Key: !Ref ImporterLocation 
                Runtime: "java8"
+               MemorySize: 1024
                Timeout: "300"
                TracingConfig:
                    Mode: "Active"

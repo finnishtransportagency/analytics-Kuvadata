@@ -11,18 +11,24 @@ public class JSONtoObject {
 	public PictureMetadata[] json2Object(String jsonString) {
 		Gson gson = new Gson();
 		gson.serializeNulls();;
-	return	gson.fromJson(jsonString, PictureMetadata[].class);
+		FeatureCollection collection = gson.fromJson(jsonString, FeatureCollection.class);
+		return collection.features;
+	}
+	
+	class FeatureCollection {
+		String type;
+		PictureMetadata[] features;
 	}
 	
 	class Attitude {
-		int bearing;
-		int elevation;
-		int bank;
+		double bearing;
+		double elevation;
+		double bank;
 
 	}
 	class PictureMetadata{
 		String type;
-		int id;
+		String id;
 		Geometry geometry;
 		String maintainer;
 		Properties properties;

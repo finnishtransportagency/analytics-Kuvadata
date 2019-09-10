@@ -26,6 +26,8 @@ import com.amazonaws.services.s3.model.S3Object;
 import com.cgi.liikennevirasto.jalonne.nouto.JSONtoObject.PictureMetadata;
 
 public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
+	private final String JPEG_TYPE = (String) "jpeg";
+	private final String JPEG_MIME = (String) "image/jpeg";
 	private final String JPG_TYPE = (String) "jpg";
     private final String JPG_MIME = (String) "image/jpeg";
     private final String PNG_TYPE = (String) "png";
@@ -73,19 +75,14 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
 			logger.log("## kuvan url: " + srcPictureURL);
 			String filename = FilenameUtils.getName(srcPictureURL.getPath());
 			
-			// Tarkista kuvan tyyppi
-	        Matcher matcher = Pattern.compile(".*\\.([^\\.]*)").matcher(filename);
-	        if (!matcher.matches()) {
-	            logger.log("## Kuvan tyyppia ei loydetty tiedostonimesta "
-	                    + filename);
-	            return "";
-	        }
-	        String imageType = matcher.group(1);
-	        if (!(JPG_TYPE.equals(imageType)) && !(PNG_TYPE.equals(imageType))) {
-	            logger.log("## Kuvatyyppi ei ole tuetttu " + filename);
-	            return "";
-	        }
+			// Ei tehdakaan tiedostyypin tarkastusta paatteen perusteella,
+			// silla lahdetiedostot ovat ilman paatetta, mutta sovitusti jpg-kuvia... -9.9.2019
 			
+			// Tallennetaan tiedostot kuitenkin aws:aan tiedostopaatteella, 
+			// jotta tableau ym osaavat hakea ja nayttaa kuvan oikein
+			String awsFilename = filename + ".jpg";
+	        
+	        String imageType = JPG_TYPE;
 			
 			// siirrettavat kuvat eivat olekaan s3:ssa, vaan missa vaan palvelimella
 			BufferedImage img = ImageIO.read(srcPictureURL.toURL());
@@ -101,12 +98,15 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
             if (PNG_TYPE.equals(imageType)) {
                 meta.setContentType(PNG_MIME);
             }
+            if (JPEG_TYPE.equals(imageType)) {
+            	meta.setContentType(JPEG_MIME);
+            }
             // tallennettaan kuva
-            logger.log("## tallennetaan kuva s3 buckettiin: " + dstBucketImages + ", " + dstFolderImages + ", " + filename);
-			PutObjectResult putObjectResult = s3.putObject(dstBucketImages, dstFolderImages + filename, is, meta);
+            logger.log("## tallennetaan kuva s3 buckettiin: " + dstBucketImages + ", " + dstFolderImages + ", " + awsFilename);
+			PutObjectResult putObjectResult = s3.putObject(dstBucketImages, dstFolderImages + awsFilename, is, meta);
 
 			// tallenna metatieto tietokantaan, jos kuvan kopiointi onnistunut
-			String dstPictureURL = "https://s3-eu-central-1.amazonaws.com/" + dstBucketImages + "/" + dstFolderImages + "/" + filename;
+			String dstPictureURL = "https://s3-eu-central-1.amazonaws.com/" + dstBucketImages + "/" + dstFolderImages + "/" + awsFilename;
 			logger.log("## s3 url: " + dstPictureURL);
 			AmazonS3URI amazonS3URI = new AmazonS3URI(dstPictureURL);
 			
