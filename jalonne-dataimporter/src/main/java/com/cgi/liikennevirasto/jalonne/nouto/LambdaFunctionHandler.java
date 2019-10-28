@@ -5,6 +5,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.net.URI;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +36,7 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
     private final String PNG_MIME = (String) "image/png";
 	final String dstBucketImages = System.getenv("imagesS3Bucket");
 	final String dstFolderImages = System.getenv("imagesFolder");
+	private static final String s3BaseURL = "https://s3-eu-central-1.amazonaws.com/";
 
 	//Lambda jaadyttaa ja mahdollisesti kierrattaa handlerin ulkopuolisia muuttujia (ja yhteyksia)
 	//Yhtaikaisten yhteyksien riittavyys varmistetaan taman lambdan max 100 yhtaikaisella suorituksella
@@ -101,12 +104,19 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
             if (JPEG_TYPE.equals(imageType)) {
             	meta.setContentType(JPEG_MIME);
             }
+            LocalDateTime localDate = LocalDateTime.now();
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+            String dateString = localDate.format(dateFormatter);
             // tallennettaan kuva
-            logger.log("## tallennetaan kuva s3 buckettiin: " + dstBucketImages + ", " + dstFolderImages + ", " + awsFilename);
-			PutObjectResult putObjectResult = s3.putObject(dstBucketImages, dstFolderImages + awsFilename, is, meta);
+            StringBuffer filekey = new StringBuffer(dstFolderImages); //root kansio kuville, sisaltaa kenoviivan
+            filekey.append(dateString).append("/"); // paivamaaraleima ja kenoviiva
+            filekey.append(awsFilename); // metatietojen mukainen nimi
+            
+            logger.log("## tallennetaan kuva s3 buckettiin: " + dstBucketImages + ", " + filekey.toString());
+			PutObjectResult putObjectResult = s3.putObject(dstBucketImages, filekey.toString(), is, meta);
 
 			// tallenna metatieto tietokantaan, jos kuvan kopiointi onnistunut
-			String dstPictureURL = "https://s3-eu-central-1.amazonaws.com/" + dstBucketImages + "/" + dstFolderImages + awsFilename;
+			String dstPictureURL =  s3BaseURL + dstBucketImages + "/" + filekey.toString();
 			logger.log("## s3 url: " + dstPictureURL);
 			AmazonS3URI amazonS3URI = new AmazonS3URI(dstPictureURL);
 			

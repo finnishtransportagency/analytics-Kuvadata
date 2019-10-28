@@ -1,0 +1,58 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: 
+    Template for lambdas to pull data
+    
+
+Resources:
+    LambdaJSONImporter: 
+        Type: AWS::Lambda::Function
+        Properties: 
+            MemorySize: 3008
+            Handler: "com.cgi.liikennevirasto.jalonne.nouto.LambdaFunctionHandler"
+            Role: 
+                Fn::ImportValue: !Sub "${JalonenMainStackName}-LambdaPullerExecutionRole"
+            Code: 
+                S3Bucket: !Ref S3BucketforImporter 
+                S3Key: !Ref ImporterLocation 
+            Runtime: "java8"
+            Timeout: "300"
+            TracingConfig:
+                Mode: "Active"
+            VpcConfig:
+                SecurityGroupIds: 
+                    - Fn::ImportValue: !Sub "${JalonenMainStackName}-PullerLambdaSecurityGroup"                    #- Fn::ImportValue: !Sub "${JalonenMainStackName}-DBWriterLambdaSecurityGroup" #lisataan manuaalisesti kunnes main-stack luotu uudelleen
+                SubnetIds:
+                 - Fn::ImportValue: !Sub "${JalonenMainStackName}-PrivateSubnet1"
+                 - Fn::ImportValue: !Sub "${JalonenMainStackName}-PrivateSubnet2"
+            Environment:
+                Variables:
+                    datasourceurl: !Ref datasourceurl
+                    Maintainer: "roudconsulting2"
+                    Cregion: !Ref "AWS::Region"
+                    s3Bucket: !Ref s3BucketJobs
+
+Parameters:
+    JalonenMainStackName:
+        Type: String
+        Description: Jalonen main Stack name
+        Default: "JalonneMain"
+
+    S3BucketforImporter:
+        Type: String
+        Description: Which S3 bucket contains Lambda function for importer
+        Default: "livijalonnelambda"
+
+    ImporterLocation:
+        Type: String
+        Description: Path to json fetcher and splitter in S3
+        Default: "jalonnejsonhandler-roadconsulting2-0.0.1.jar"
+
+    datasourceurl:
+        Type: String
+        Description: source meta url
+        Default: "http://ri.roadconsulting.fi/bigdata/4/images"
+
+    s3BucketJobs:
+       Type: String
+       Description: S3 bucket for jalonnejobs
+       Default: "jalonnejobbucket"

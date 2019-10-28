@@ -589,7 +589,7 @@
                    Ref:  DBSubnetGroup
                VpcSecurityGroupIds:
                    - !Ref DBSecurityGroup
-               EngineVersion: 9.6.8 #snapshots require same version
+               EngineVersion: 9.6.12 #snapshots require same version
    
        AuroraPrimaryInstance:
            Type: AWS::RDS::DBInstance
