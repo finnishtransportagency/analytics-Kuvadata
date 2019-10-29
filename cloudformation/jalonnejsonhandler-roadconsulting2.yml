@@ -27,7 +27,7 @@ Resources:
             Environment:
                 Variables:
                     datasourceurl: !Ref datasourceurl
-                    Maintainer: "roudconsulting2"
+                    Maintainer: "roadconsulting2"
                     Cregion: !Ref "AWS::Region"
                     s3Bucket: !Ref s3BucketJobs
 
@@ -40,12 +40,12 @@ Parameters:
     S3BucketforImporter:
         Type: String
         Description: Which S3 bucket contains Lambda function for importer
-        Default: "livijalonnelambda"
+        Default: "livijalonnelambdadev"
 
     ImporterLocation:
         Type: String
         Description: Path to json fetcher and splitter in S3
-        Default: "jalonnejsonhandler-roadconsulting2-0.0.1.jar"
+        Default: "jalonnejsonhandler2-0.0.1.jar"
 
     datasourceurl:
         Type: String
@@ -55,4 +55,4 @@ Parameters:
     s3BucketJobs:
        Type: String
        Description: S3 bucket for jalonnejobs
-       Default: "jalonnejobbucket"
+       Default: "jalonnejobbucketdev"

@@ -50,8 +50,8 @@ public class LambdaFunctionHandler implements RequestHandler<Object, String> {
 				Point2D.Double fromETRS89 = new Point2D.Double(koordinaatit.get(1), koordinaatit.get(0));
 				Point2D.Double toWGS84 = Koordinaattimuuntaja.convertFromETRS89ToWGS84(fromETRS89);
 				List<Double> muunnetutkoordinaatit = new ArrayList<Double>();
-				muunnetutkoordinaatit.add(toWGS84.getX());
-				muunnetutkoordinaatit.add(toWGS84.getY());
+				muunnetutkoordinaatit.add(toWGS84.getX()); //jarjestys 0
+				muunnetutkoordinaatit.add(toWGS84.getY()); //jarjestys 1, koska tama jarjestys oletetaan seuraavassa vaiheessa
 				picMetadata.geometry.coordinates = muunnetutkoordinaatit;
 				
 				String generatedString = UUID.randomUUID().toString().replace("-", "");

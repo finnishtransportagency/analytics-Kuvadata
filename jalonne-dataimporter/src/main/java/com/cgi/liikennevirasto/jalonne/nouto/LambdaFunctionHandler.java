@@ -112,7 +112,7 @@ public class LambdaFunctionHandler implements RequestHandler<S3Event, String> {
             filekey.append(dateString).append("/"); // paivamaaraleima ja kenoviiva
             filekey.append(awsFilename); // metatietojen mukainen nimi
             
-            logger.log("## tallennetaan kuva s3 buckettiin: " + dstBucketImages + ", " + filekey.toString());
+            logger.log("## tallennetaan kuva s3 bucket: " + dstBucketImages + ", " + filekey.toString());
 			PutObjectResult putObjectResult = s3.putObject(dstBucketImages, filekey.toString(), is, meta);
 
 			// tallenna metatieto tietokantaan, jos kuvan kopiointi onnistunut

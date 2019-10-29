@@ -11,7 +11,7 @@ import org.osgeo.proj4j.ProjCoordinate;
 public class Koordinaattimuuntaja {
 
 	private static final CoordinateTransform transformerFromEtrs89Tm35FinToWgs84;
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	
 	static {
         CRSFactory crsFactory = new CRSFactory();

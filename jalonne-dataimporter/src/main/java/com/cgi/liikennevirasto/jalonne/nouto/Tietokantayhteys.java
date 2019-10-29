@@ -112,7 +112,7 @@ public class Tietokantayhteys {
 		List<Double> koordinaatit = picture.geometry.coordinates;
 		Point point = null;
 		try {
-			point = new Point(koordinaatit.get(1), koordinaatit.get(0)); //jsonissa jarjestyksessa lat, long
+			point = new Point(koordinaatit.get(0), koordinaatit.get(1)); //jsonissa jarjestyksessa long(x), lat(y)
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

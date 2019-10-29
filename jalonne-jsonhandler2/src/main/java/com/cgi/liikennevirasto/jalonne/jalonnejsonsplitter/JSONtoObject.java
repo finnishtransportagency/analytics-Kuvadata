@@ -18,11 +18,6 @@ public class JSONtoObject {
 		return gson.fromJson(jsonString, PictureMetadata[].class);
 	}
 	
-	class FeatureCollection {
-		String type;
-		PictureMetadata[] features;
-	}
-	
 	class Attitude {
 		double bearing;
 		double elevation;
@@ -37,7 +32,6 @@ public class JSONtoObject {
 		Properties properties;
 		String url;
 	}
-
 
 	class Properties{
 		String time;
